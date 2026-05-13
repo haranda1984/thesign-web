@@ -137,9 +137,9 @@ img { display: block; max-width: 100%; }
   padding: 0 2rem;
 }
 
-.nav-logo { display: flex; align-items: center; }
+.nav-logo { display: flex; align-items: center; overflow: visible; }
 .nav-logo-img {
-  height: 80px;
+  height: 100px;
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));
