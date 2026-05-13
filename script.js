@@ -64,7 +64,7 @@ function runCounter(el) {
 const cObs = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) { runCounter(e.target); cObs.unobserve(e.target); } });
 }, { threshold: 0.7 });
-document.querySelectorAll('.sn[data-target]').forEach(el => cObs.observe(el));
+document.querySelectorAll('.cn[data-target]').forEach(el => cObs.observe(el));
 
 /* --- Contact form --- */
 const form = document.getElementById('contactForm');
