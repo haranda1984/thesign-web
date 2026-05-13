@@ -26,49 +26,73 @@ document.querySelectorAll('.m-link').forEach(l => {
   });
 });
 
-/* --- Smooth scroll (links) --- */
+/* --- Snap scroll por secciones --- */
+const sections = () => [...document.querySelectorAll('section[id]')];
+
+function getSnapY(el) {
+  const navH = nav.offsetHeight;
+  const secH = el.offsetHeight;
+  const vH   = window.innerHeight;
+  // Centrar si la sección cabe en pantalla, sino alinear al top bajo el nav
+  return secH < vH
+    ? Math.max(0, el.offsetTop - navH - Math.max(0, (vH - navH - secH) / 2))
+    : Math.max(0, el.offsetTop - navH);
+}
+
+let isSnapping = false;
+
+function snapTo(el) {
+  window.scrollTo({ top: getSnapY(el), behavior: 'smooth' });
+}
+
+// Links de navegación
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener('click', e => {
     const t = document.querySelector(a.getAttribute('href'));
     if (!t) return;
     e.preventDefault();
+    isSnapping = true;
     snapTo(t);
+    setTimeout(() => { isSnapping = false; }, 900);
   });
 });
 
-/* --- Section snap on scroll --- */
-const sections = () => [...document.querySelectorAll('section[id]')];
-
-function snapTo(el) {
-  const navH = nav.offsetHeight;
-  const secH = el.offsetHeight;
-  const vH   = window.innerHeight;
-  // Center section if shorter than viewport, else align top under nav
-  const top = secH < vH
-    ? el.offsetTop - navH - Math.max(0, (vH - navH - secH) / 2)
-    : el.offsetTop - navH;
-  window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-}
-
-function nearestSection() {
-  const mid = window.scrollY + window.innerHeight / 2;
-  return sections().reduce((best, s) => {
-    const sMid = s.offsetTop + s.offsetHeight / 2;
-    return Math.abs(sMid - mid) < Math.abs((best.offsetTop + best.offsetHeight / 2) - mid) ? s : best;
-  });
-}
-
+// Snap al cruzar el punto medio entre secciones (sin resorte al soltar)
 let snapTimer = null;
-let isSnapping = false;
+
+// Retorna la sección a la que hay que snapear, o null si no aplica.
+// Solo snaps cuando el scroll sobrepasa el punto medio entre dos snap-points.
+function snapTarget() {
+  const y  = window.scrollY;
+  const ys = sections().map(getSnapY);
+  const ss = sections();
+
+  // Encontrar entre qué dos snap-points estamos
+  for (let i = 0; i < ys.length - 1; i++) {
+    const lo = ys[i];
+    const hi = ys[i + 1];
+
+    if (y > lo && y < hi) {
+      const mid = (lo + hi) / 2;
+      // Solo snap si ya cruzamos el punto medio (≥50% del camino al siguiente)
+      if (y >= mid) return ss[i + 1];
+      // Antes del punto medio → scroll libre, sin resorte
+      return null;
+    }
+  }
+  return null;
+}
 
 window.addEventListener('scroll', () => {
   if (isSnapping) return;
   clearTimeout(snapTimer);
   snapTimer = setTimeout(() => {
+    const target = snapTarget();
+    if (!target) return;
     isSnapping = true;
-    snapTo(nearestSection());
-    setTimeout(() => { isSnapping = false; }, 700);
-  }, 120);
+    snapTo(target);
+    setTimeout(() => { isSnapping = false; }, 800);
+  }, 150);
 }, { passive: true });
 
 /* --- Reveal on scroll --- */
