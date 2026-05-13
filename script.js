@@ -26,16 +26,50 @@ document.querySelectorAll('.m-link').forEach(l => {
   });
 });
 
-/* --- Smooth scroll --- */
+/* --- Smooth scroll (links) --- */
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener('click', e => {
     const t = document.querySelector(a.getAttribute('href'));
     if (!t) return;
     e.preventDefault();
-    const off = nav.offsetHeight + 8;
-    window.scrollTo({ top: t.offsetTop - off, behavior: 'smooth' });
+    snapTo(t);
   });
 });
+
+/* --- Section snap on scroll --- */
+const sections = () => [...document.querySelectorAll('section[id]')];
+
+function snapTo(el) {
+  const navH = nav.offsetHeight;
+  const secH = el.offsetHeight;
+  const vH   = window.innerHeight;
+  // Center section if shorter than viewport, else align top under nav
+  const top = secH < vH
+    ? el.offsetTop - navH - Math.max(0, (vH - navH - secH) / 2)
+    : el.offsetTop - navH;
+  window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+}
+
+function nearestSection() {
+  const mid = window.scrollY + window.innerHeight / 2;
+  return sections().reduce((best, s) => {
+    const sMid = s.offsetTop + s.offsetHeight / 2;
+    return Math.abs(sMid - mid) < Math.abs((best.offsetTop + best.offsetHeight / 2) - mid) ? s : best;
+  });
+}
+
+let snapTimer = null;
+let isSnapping = false;
+
+window.addEventListener('scroll', () => {
+  if (isSnapping) return;
+  clearTimeout(snapTimer);
+  snapTimer = setTimeout(() => {
+    isSnapping = true;
+    snapTo(nearestSection());
+    setTimeout(() => { isSnapping = false; }, 700);
+  }, 120);
+}, { passive: true });
 
 /* --- Reveal on scroll --- */
 const observer = new IntersectionObserver(entries => {
